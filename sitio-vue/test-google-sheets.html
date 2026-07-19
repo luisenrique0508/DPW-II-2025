@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prueba Google Sheets - Cafetería Luu</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .success {
+            background: #e8f5e8;
+            color: #2e7d32;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .product {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            display: flex;
+            gap: 15px;
+        }
+        .product img {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+        .product-info {
+            flex: 1;
+        }
+        .product-name {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        .product-price {
+            font-size: 1.1em;
+            color: #ff6b35;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .product-category {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            display: inline-block;
+            margin-bottom: 5px;
+        }
+        .product-description {
+            color: #666;
+            line-height: 1.4;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .stat-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #ff6b35;
+        }
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+        }
+        button {
+            background: #ff6b35;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+        }
+        button:hover {
+            background: #e55a2b;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Prueba de Conexión con Google Sheets</h1>
+        <p>Esta página prueba la conexión con tu hoja de Google Sheets para verificar que todo funcione correctamente.</p>
+        
+        <button onclick="probarConexion()">🔄 Probar Conexión</button>
+        
+        <div id="resultado">
+            <div class="loading">
+                Haz clic en "Probar Conexión" para verificar tu Google Sheets
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const GOOGLE_SHEETS_URL = 'https://opensheet.elk.sh/2PACX-1vTI_ygTn6zCBUwH35tzP-fhVt5n36q0QXic9BnmRG_3XhjhdVlUcFlaf-gmf1su-6WSIbDuB6lxIWRt/Hoja1';
+        
+        async function probarConexion() {
+            const resultado = document.getElementById('resultado');
+            resultado.innerHTML = '<div class="loading">🔄 Conectando con Google Sheets...</div>';
+            
+            try {
+                console.log('Probando conexión con:', GOOGLE_SHEETS_URL);
+                
+                const response = await fetch(GOOGLE_SHEETS_URL);
+                
+                if (!response.ok) {
+                    throw new Error(`Error HTTP: ${response.status} - ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                console.log('Datos recibidos:', data);
+                
+                if (!Array.isArray(data)) {
+                    throw new Error('Los datos no son un array válido');
+                }
+                
+                if (data.length === 0) {
+                    throw new Error('La hoja de cálculo está vacía');
+                }
+                
+                // Mostrar resultados exitosos
+                mostrarResultados(data);
+                
+            } catch (error) {
+                console.error('Error:', error);
+                resultado.innerHTML = `
+                    <div class="error">
+                        <h3>❌ Error de Conexión</h3>
+                        <p><strong>Error:</strong> ${error.message}</p>
+                        <h4>Posibles soluciones:</h4>
+                        <ul>
+                            <li>Verifica que tu hoja de Google Sheets sea pública</li>
+                            <li>Confirma que la pestaña se llame exactamente "Hoja1"</li>
+                            <li>Asegúrate de que tengas datos en la hoja</li>
+                            <li>Revisa que las columnas sean: nombre, precio, categoria, imagen, descripcion</li>
+                        </ul>
+                    </div>
+                `;
+            }
+        }
+        
+        function mostrarResultados(data) {
+            const resultado = document.getElementById('resultado');
+            
+            // Estadísticas
+            const categorias = {};
+            data.forEach(item => {
+                const cat = item.categoria || 'sin categoria';
+                categorias[cat] = (categorias[cat] || 0) + 1;
+            });
+            
+            let html = `
+                <div class="success">
+                    <h3>✅ Conexión Exitosa</h3>
+                    <p>Se cargaron <strong>${data.length}</strong> productos desde tu Google Sheets</p>
+                </div>
+                
+                <div class="stats">
+                    <div class="stat-card">
+                        <div class="stat-number">${data.length}</div>
+                        <div class="stat-label">Total Productos</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">${Object.keys(categorias).length}</div>
+                        <div class="stat-label">Categorías</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">${data.filter(p => p.precio && !isNaN(parseFloat(p.precio))).length}</div>
+                        <div class="stat-label">Con Precio Válido</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">${data.filter(p => p.imagen && p.imagen.startsWith('http')).length}</div>
+                        <div class="stat-label">Con Imagen</div>
+                    </div>
+                </div>
+                
+                <h3>📊 Categorías encontradas:</h3>
+                <p>${Object.entries(categorias).map(([cat, count]) => `<span class="product-category">${cat}: ${count}</span>`).join(' ')}</p>
+                
+                <h3>🍽️ Productos encontrados:</h3>
+            `;
+            
+            // Mostrar productos
+            data.forEach((producto, index) => {
+                const precio = parseFloat(producto.precio) || 0;
+                const imagen = producto.imagen && producto.imagen.startsWith('http') ? 
+                    producto.imagen : 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=100&h=100&fit=crop';
+                
+                html += `
+                    <div class="product">
+                        <img src="${imagen}" alt="${producto.nombre || 'Sin nombre'}" onerror="this.src='https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=100&h=100&fit=crop'">
+                        <div class="product-info">
+                            <div class="product-name">${producto.nombre || 'Sin nombre'}</div>
+                            <div class="product-price">${precio > 0 ? precio + ' Bs' : 'Sin precio'}</div>
+                            <div class="product-category">${producto.categoria || 'sin categoria'}</div>
+                            <div class="product-description">${producto.descripcion || 'Sin descripción'}</div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            resultado.innerHTML = html;
+        }
+    </script>
+</body>
+</html>

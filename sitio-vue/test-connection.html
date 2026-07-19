@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prueba de Conexión - Google Sheets</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .loading {
+            color: #666;
+            text-align: center;
+            padding: 20px;
+        }
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .success {
+            background: #e8f5e8;
+            color: #2e7d32;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        button {
+            background: #ff6b35;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #e55a2b;
+        }
+        .data {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            white-space: pre-wrap;
+            font-family: monospace;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Prueba de Conexión con Google Sheets</h1>
+        <p><strong>URL a probar:</strong><br>
+        <code>https://opensheet.elk.sh/1a8IK5WebbuUZcm2x2W-dsiH4XFV8qAtjCsCvET2UcY8/menu</code></p>
+        
+        <button onclick="probarConexion()">🔄 Probar Conexión</button>
+        <button onclick="probarEnNavegador()">🌐 Abrir en Navegador</button>
+        
+        <div id="resultado">
+            <div class="loading">Haz clic en "Probar Conexión" para verificar tu Google Sheets</div>
+        </div>
+    </div>
+
+    <script>
+        const GOOGLE_SHEETS_URL = 'https://opensheet.elk.sh/1a8IK5WebbuUZcm2x2W-dsiH4XFV8qAtjCsCvET2UcY8/menu';
+        
+        function probarEnNavegador() {
+            window.open(GOOGLE_SHEETS_URL, '_blank');
+        }
+        
+        async function probarConexion() {
+            const resultado = document.getElementById('resultado');
+            resultado.innerHTML = '<div class="loading">🔄 Conectando con Google Sheets...</div>';
+            
+            try {
+                console.log('🔄 Probando conexión con:', GOOGLE_SHEETS_URL);
+                
+                const response = await fetch(GOOGLE_SHEETS_URL);
+                
+                console.log('📡 Respuesta recibida:', {
+                    status: response.status,
+                    statusText: response.statusText,
+                    headers: Object.fromEntries(response.headers.entries())
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Error HTTP: ${response.status} - ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                console.log('📊 Datos recibidos:', data);
+                
+                if (!Array.isArray(data)) {
+                    throw new Error('Los datos no son un array válido');
+                }
+                
+                if (data.length === 0) {
+                    resultado.innerHTML = `
+                        <div class="error">
+                            <h3>⚠️ Hoja Vacía</h3>
+                            <p>La conexión fue exitosa, pero tu hoja de Google Sheets está vacía.</p>
+                            <p><strong>Solución:</strong> Agrega algunos productos a tu hoja con las columnas:</p>
+                            <ul>
+                                <li><strong>nombre</strong> - Nombre del producto</li>
+                                <li><strong>precio</strong> - Precio en números (ej: 25.50)</li>
+                                <li><strong>categoria</strong> - cafes, postres, bebidas, o snacks</li>
+                                <li><strong>imagen</strong> - URL de una imagen</li>
+                                <li><strong>descripcion</strong> - Descripción del producto</li>
+                            </ul>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Mostrar resultados exitosos
+                let html = `
+                    <div class="success">
+                        <h3>✅ ¡Conexión Exitosa!</h3>
+                        <p>Se encontraron <strong>${data.length}</strong> filas en tu Google Sheets</p>
+                    </div>
+                    
+                    <h3>📊 Datos recibidos:</h3>
+                    <div class="data">${JSON.stringify(data, null, 2)}</div>
+                    
+                    <h3>🔍 Análisis de datos:</h3>
+                `;
+                
+                // Analizar cada fila
+                data.forEach((item, index) => {
+                    const fila = index + 1;
+                    html += `<p><strong>Fila ${fila}:</strong> `;
+                    
+                    if (item.nombre) html += `✅ Nombre: "${item.nombre}" `;
+                    else html += `❌ Sin nombre `;
+                    
+                    if (item.precio && !isNaN(parseFloat(item.precio))) html += `✅ Precio: ${item.precio} `;
+                    else html += `❌ Precio inválido `;
+                    
+                    if (item.categoria) html += `✅ Categoría: "${item.categoria}" `;
+                    else html += `❌ Sin categoría `;
+                    
+                    if (item.imagen && item.imagen.startsWith('http')) html += `✅ Imagen válida `;
+                    else html += `❌ Imagen inválida `;
+                    
+                    if (item.descripcion) html += `✅ Descripción `;
+                    else html += `❌ Sin descripción `;
+                    
+                    html += `</p>`;
+                });
+                
+                resultado.innerHTML = html;
+                
+            } catch (error) {
+                console.error('❌ Error:', error);
+                
+                let errorHtml = `
+                    <div class="error">
+                        <h3>❌ Error de Conexión</h3>
+                        <p><strong>Error:</strong> ${error.message}</p>
+                `;
+                
+                if (error.message.includes('CORS')) {
+                    errorHtml += `
+                        <h4>🔧 Problema de CORS:</h4>
+                        <p>El navegador está bloqueando la conexión por políticas de CORS.</p>
+                        <p><strong>Soluciones:</strong></p>
+                        <ul>
+                            <li>Verifica que tu hoja de Google Sheets sea completamente pública</li>
+                            <li>Asegúrate de que cualquiera con el enlace pueda ver la hoja</li>
+                            <li>Prueba abrir la URL directamente en el navegador</li>
+                        </ul>
+                    `;
+                } else if (error.message.includes('404')) {
+                    errorHtml += `
+                        <h4>🔧 Hoja no encontrada:</h4>
+                        <ul>
+                            <li>Verifica que el ID de la hoja sea correcto</li>
+                            <li>Confirma que la pestaña se llame exactamente "Hoja1"</li>
+                            <li>Asegúrate de que la hoja sea pública</li>
+                        </ul>
+                    `;
+                } else if (error.message.includes('Failed to fetch')) {
+                    errorHtml += `
+                        <h4>🔧 Error de red:</h4>
+                        <ul>
+                            <li>Verifica tu conexión a internet</li>
+                            <li>Prueba abrir la URL directamente en el navegador</li>
+                            <li>Puede ser un problema temporal del servicio</li>
+                        </ul>
+                    `;
+                }
+                
+                errorHtml += `
+                        <p><strong>URL probada:</strong><br><code>${GOOGLE_SHEETS_URL}</code></p>
+                    </div>
+                `;
+                
+                resultado.innerHTML = errorHtml;
+            }
+        }
+    </script>
+</body>
+</html>
